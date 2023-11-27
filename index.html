@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Графический тренажер по булевым функциям</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-image: url('rrt1.jpg');
+            background-size: cover;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            background-position: center center;
+            margin: 0;
+            padding: 0;
+            color: white;
+        }
+        #container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #gate {
+            width: 300px;
+            height: 300px;
+            background-image: url('magic-gate.png');
+            background-size: cover; /* Для корректного масштабирования фоновой картинки */
+            margin: 0 auto;
+            transition: background-image 0.5s; /* Используем переход для свойства background-image */
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        h1 {
+            font-size: 18px;
+            margin: 20px 0;
+        }
+        h2 {
+            font-size: 18px;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .open-portal-button {
+            background-color: #3498db !important; /* Цвет фона кнопки "Открыть портал" */
+        }
+        .reloadButton {
+            background-color: #3498db !important; /* Цвет фона кнопки "Открыть портал" */
+        }
+        button {
+            font-size: 18px;
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            background-color: #3498db;
+            color: #fff;
+        }
+        button[data-state="0"] {
+            background-color: #e74c3c;
+        }
+        button[data-state="1"] {
+            background-color: #27ae60;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #gameOverMessage {
+            color: red;
+            font-size: 28px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="logo">
+    <img src="logo2.gif" alt="Логотип">
+    <h1>Добро пожаловать! Нажимайте кнопки, чтобы изменить значения A, B и C и открыть магический портал!</h1>
+    <h1 id="score">Счет: 999</h1>
+    <h1> Уровень: <span id="currentLevel">1</span></h1>
+    <button onclick="toggleValue('inputA')" data-input="A" data-state="0">A</button>
+    <span id="stateA">0</span>
+    <button onclick="toggleValue('inputB')" data-input="B" data-state="0">B</button>
+    <span id="stateB">0</span>
+    <button onclick="toggleValue('inputC')" data-input="C" data-state="0">C</button>
+    <span id="stateC">0</span>
+    <button class="open-portal-button" onclick="openGate()">Открыть портал</button>
+    <div id="gate"></div>
+    <div id="gateFunction" style="font-size: 32px;"></div>
+    <button class="reloadButton" onclick="reloadPage()">Перезапуск</button>
+    <div id="gameOverMessage" style="display: none; color: red; font-size: 24px;">Игра окончена!</div>
+    <div id="restartMessage" style="display: none; position: fixed; bottom: 10px; right: 10px;
+    font-size: 32px; color: #3498db; padding: 10px;border-radius: 5px;">Перезапуск...</div>
+    <a href="https://mathhelpplanet.com/static.php?p=formuly-i-superpozitsii-bulevykh-funktsiy" target="_blank" style="position: fixed; color: #3498db; bottom: 10px; left: 10px;">С теорий можно ознакомиться тут</a>
+
+    <script>
+        let score = 999; // Изначальный счет
+        let scoreInterval; // Переменная для хранения интервала обновления счета
+
+        let buttonDisabled = false; // Флаг, показывающий, можно ли нажимать кнопки
+        const buttonDelay = 700; // Задержка в миллисекундах (в данном случае, 2 секунды)
+
+        let currentLevel = 1;
+        function updateScoreDisplay() {
+            const scoreElement = document.getElementById("score");
+            scoreElement.innerText = `Счет: ${score}`;
+        }
+        function updateCurrentLevel() {
+            setTimeout(function() {
+                const levelElement = document.getElementById("currentLevel");
+                levelElement.innerText = currentLevel;
+                updateGateFunction();
+            }, 700);
+        }
+        function startScoreTimer() {
+            scoreInterval = setInterval(function() {
+                score -= 1; // Уменьшаем счет на 10 каждую секунду
+                updateScoreDisplay();
+                if (score <= 0) {
+                    gameOver();
+                }
+            }, 100); // Запускаем интервал каждую секунду
+        }
+
+        // Запускаем таймер счета при загрузке страницы
+        startScoreTimer();
+
+        function toggleValue(inputId) {
+            if (!buttonDisabled) {
+                const input = document.getElementById("state" + inputId[inputId.length - 1]);
+                const button = document.querySelector("button[data-input='" + inputId[inputId.length - 1] + "']");
+                if (input.innerText === '1') {
+                    input.innerText = '0';
+                    button.setAttribute("data-state", "0");
+                } else {
+                    input.innerText = '1';
+                    button.setAttribute("data-state", "1");
+                }
+                updateGateFunction();
+                buttonDisabled = true;
+                setTimeout(function () {
+                    buttonDisabled = false;
+                }, buttonDelay);
+            }
+        }
+
+        function updateGateFunction() {
+            const gateFunction = document.getElementById("gateFunction");
+
+            switch (currentLevel) {
+                case 1:
+                    gateFunction.innerText = "A ∧ B ∧ ¬C";
+                    break;
+                case 2:
+                    gateFunction.innerText = "A ∧ (C ⊕ B) ∧ C";
+                    break;
+                case 3:
+                    gateFunction.innerText = "(A → ¬B) ∧ ¬C ∧ B";
+                    break;
+                case 4:
+                    gateFunction.innerText = "¬(B ∧ C → (A ↑ B))";
+                    break;
+                case 5:
+                    gateFunction.innerText = "(A ⊕ B) ∧ (A ∧ ¬B) ∧ C";
+                    break;
+                case 6:
+                    gateFunction.innerText = "(¬(A → ¬B) ∧ B) ∧ (C ⊕ B)";
+                    break;
+                case 7:
+                    gateFunction.innerText = "¬((A ↑ B) → (B ↑ C))";
+                    break;
+                case 8:
+                    gateFunction.innerText = "¬((A ⊕ B) ↑ (¬B ∧ C))";
+                    break;
+                case 9:
+                    gateFunction.innerText = "¬(A → B) ↓ (A ↑ C)";
+                    break;
+                case 10:
+                    gateFunction.innerText = "(A ↑ (B ∧ C)) ≡ ¬(A ↑ B)";
+                    break;
+            }
+        }
+
+        function resetButtons() {
+            const buttons = document.querySelectorAll("button");
+            const states = document.querySelectorAll("[id^='state']");
+
+            buttons.forEach(button => {
+                button.disabled = false;
+                button.setAttribute("data-state", "0"); 
+            });
+
+            states.forEach(state => {
+                state.innerText = "0";
+            });
+        }
+
+        function openGate() {
+
+            if (buttonDisabled) {
+                return; // Если кнопки заблокированы, не выполняем действия
+            }
+
+            buttonDisabled = true;
+
+            clearInterval(scoreInterval);
+
+            const inputA = parseInt(document.getElementById("stateA").innerText);
+            const inputB = parseInt(document.getElementById("stateB").innerText);
+            const inputC = parseInt(document.getElementById("stateC").innerText);
+
+            let isGateOpen = false;
+
+            switch (currentLevel) {
+                case 1:
+                    isGateOpen = (inputA && inputB) && !inputC;
+                    break;
+                case 2:
+                    isGateOpen = inputA && (inputC && !inputB || !inputC && inputB) && inputC;
+                    break;
+                case 3:
+                    isGateOpen = (!inputA || !inputB) && !inputC && inputB;
+                    break;
+                case 4:
+                    isGateOpen = !(!(inputB && inputC) || !(inputA && inputB));
+                    break;
+                case 5:
+                    isGateOpen = (inputA && !inputB || !inputA && inputB) && (inputA && !inputB) && inputC;
+                    break;
+                case 6:
+                    isGateOpen = ((inputA && inputB) && inputB) && (inputC && !inputB || !inputC && inputB);
+                    break;
+                case 7:
+                    isGateOpen = !((inputA && inputB) || !(inputB && inputC));
+                    break;
+                case 8:
+                    isGateOpen = ((inputA && !inputB || !inputA && inputB) && (!inputB && inputC));
+                    break;
+                case 9:
+                    isGateOpen = !((inputA && !inputB) || !(inputA && inputC));
+                    break;
+                case 10:
+                    isGateOpen = !(inputA && inputB && inputC) && (inputA && inputB);
+                    break;
+            }
+
+            if (isGateOpen) {
+                const gate = document.getElementById("gate");
+                gate.style.backgroundImage = "url('magic-portal.png')";
+                if (currentLevel === 10){
+                    document.querySelector("h1").innerText = "Вы достигли ультиматива!";
+                } else {
+                    document.querySelector("h1").innerText = "Портал открыт! Переход к следующему уровню...";
+                }
+                currentLevel++;
+                if (currentLevel > 10) {
+                    // Пользователь прошел последний уровень
+                    congratulateUser();
+                } else {
+                    setTimeout(function () {
+                        updateGateFunction();
+                        resetButtons();
+                        resetGate();
+                        startScoreTimer();
+                    }, 700);
+                }
+            } else {
+                const gate = document.getElementById("gate");
+                gate.style.backgroundImage = "url('magic-gate.png')";
+                document.querySelector("h1").innerText = "Портал закрыт!";
+                setTimeout(function () {
+                    document.querySelector("h1").innerText = "Нажимайте кнопки, чтобы изменить значения A, B и C и открыть портал";
+                }, 700);
+                score -= 100;
+                updateScoreDisplay();
+                startScoreTimer();
+            }
+
+            updateCurrentLevel();
+            setTimeout(function () {
+                buttonDisabled = false;
+            }, buttonDelay);
+        }
+
+        function resetGate() {
+            const gate = document.getElementById("gate");
+            gate.style.backgroundImage = "url('magic-gate.png')";
+            document.querySelector("h1").innerText = "Нажимайте кнопки, чтобы изменить значения A, B и C и открыть портал";
+        }
+        function reloadPage() {
+            const restartMessage = document.getElementById("restartMessage");
+            restartMessage.style.display = "block"; // Отображаем сообщение "Перезапуск..."
+            setTimeout(function() {
+                location.reload(); // Обновляем страницу после 2-секундной задержки
+            }, 2000);
+        }
+
+        function gameOver() {
+            const buttons = document.querySelectorAll("button");
+            buttons.forEach(button => {
+                if (button.classList.contains("reloadButton")) {
+                    button.disabled = false; // Сделать кнопку "Играть снова" активной
+                } else {
+                    button.disabled = true; // Остальные кнопки оставить неактивными
+                }
+            });
+            clearInterval(scoreInterval);
+            const gameOverMessage = document.getElementById("gameOverMessage");
+            gameOverMessage.style.display = "block";
+            const reloadButton = document.getElementById("reloadButton");
+            reloadButton.style.display = "block";
+        }
+        function congratulateUser() {
+            const restartMessage = document.getElementById("restartMessage");
+            restartMessage.style.display = "none"; // Скрываем сообщение "Перезапуск..."
+            const gameOverMessage = document.getElementById("gameOverMessage");
+            const finalScore = document.getElementById("score").textContent;
+            gameOverMessage.style.display = "block";
+            gameOverMessage.innerText = `Поздравляем! Вы прошли все уровни и открыли бездну! ${finalScore}`;
+            const reloadButton = document.getElementById("reloadButton");
+            reloadButton.style.display = "block";
+        }
+        updateGateFunction();
+    </script>
+</body>
+</html>
